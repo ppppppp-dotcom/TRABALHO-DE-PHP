@@ -1,0 +1,32 @@
+[
+    {
+        "id": "6a0480863ab0d",
+        "titulo": "ivan bicha",
+        "descricao": "ivan gay",
+        "data_limite": "2026-05-14",
+        "responsavel_id": "6a047f6b45067",
+        "responsavel_nome": "PEDRO HENRIQUE FRASON JORGE",
+        "criador_id": "6a047f6b45067",
+        "criador_nome": "PEDRO HENRIQUE FRASON JORGE",
+        "status": "Em andamento",
+        "comentarios": [
+            {
+                "usuario": "PEDRO HENRIQUE FRASON JORGE",
+                "texto": "ivan ainda e gay",
+                "data_hora": "13\/05\/2026 15:46:02"
+            }
+        ],
+        "historico": [
+            {
+                "usuario": "PEDRO HENRIQUE FRASON JORGE",
+                "mensagem": "Tarefa criada.",
+                "data_hora": "13\/05\/2026 15:45:42"
+            },
+            {
+                "usuario": "PEDRO HENRIQUE FRASON JORGE",
+                "mensagem": "Alterou o status de 'Pendente' para 'Em andamento'.",
+                "data_hora": "13\/05\/2026 15:45:51"
+            }
+        ]
+    }
+]

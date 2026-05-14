@@ -1,96 +1,93 @@
 <?php
-// nova_tarefa.php
+// Página para criar novas tarefas no sistema
 require_once 'includes/functions.php';
-checkAuth();
+validarLogin();
 
-$usuarios = getData('usuarios');
-$erro = "";
+// Busca usuários para preencher o campo de "Responsável"
+$users = buscarDados('usuarios');
+$err = "";
 
+// Verifica se o formulário foi enviado
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $titulo = sanitize($_POST['titulo']);
-    $descricao = sanitize($_POST['descricao']);
-    $data_limite = $_POST['data_limite'];
-    $responsavel_id = $_POST['responsavel_id'];
+    $tit = filtrar($_POST['titulo']);
+    $desc = filtrar($_POST['descricao']);
+    $fim = $_POST['data_limite'];
+    $resp = $_POST['responsavel_id'];
 
-    if (empty($titulo) || empty($data_limite) || empty($responsavel_id)) {
-        $erro = "Preencha todos os campos obrigatórios.";
-    } else {
-        // Buscar nome do responsável
-        $responsavel_nome = "";
-        foreach ($usuarios as $u) {
-            if ($u['id'] === $responsavel_id) {
-                $responsavel_nome = $u['nome'];
-                break;
-            }
+    // Validação básica: campos obrigatórios
+    if ($tit && $fim && $resp) {
+        $nome_r = "";
+        // Procura o nome do responsável selecionado no array de usuários
+        foreach ($users as $u) {
+            if ($u['id'] === $resp) { $nome_r = $u['nome']; break; }
         }
 
-        $tarefas = getData('tarefas');
-        $novaTarefa = [
-            'id' => uniqid(),
-            'titulo' => $titulo,
-            'descricao' => $descricao,
-            'data_limite' => $data_limite,
-            'responsavel_id' => $responsavel_id,
-            'responsavel_nome' => $responsavel_nome,
+        $list = buscarDados('tarefas');
+        // Adiciona a nova tarefa ao array
+        $list[] = [
+            'id' => uniqid(), // Gera um ID único aleatório
+            'titulo' => $tit,
+            'descricao' => $desc,
+            'data_limite' => $fim,
+            'responsavel_id' => $resp,
+            'responsavel_nome' => $nome_r,
             'criador_id' => $_SESSION['usuario_id'],
             'criador_nome' => $_SESSION['usuario_nome'],
-            'status' => 'Pendente',
+            'status' => 'Pendente', // Toda tarefa nova nasce como Pendente
             'comentarios' => [],
             'historico' => [
-                [
-                    'usuario' => $_SESSION['usuario_nome'],
-                    'mensagem' => 'Tarefa criada.',
-                    'data_hora' => date('d/m/Y H:i:s')
-                ]
+                ['usuario' => $_SESSION['usuario_nome'], 'mensagem' => 'Tarefa criada.', 'data' => date('d/m/Y H:i')]
             ]
         ];
         
-        $tarefas[] = $novaTarefa;
-        saveData('tarefas', $tarefas);
+        // Salva a lista atualizada no arquivo JSON
+        salvarDados('tarefas', $list);
         header('Location: index.php');
         exit;
+    } else {
+        $err = "Preencha os campos obrigatórios.";
     }
 }
 
 include 'includes/header.php';
 ?>
 
-<div style="max-width: 600px; margin: 0 auto; background: var(--card-bg); padding: 2rem; border-radius: 12px; box-shadow: var(--shadow);">
-    <h2 style="margin-bottom: 2rem;">Criar Nova Tarefa</h2>
+<div class="centralizar-cartao barra-filtros" style="max-width: 600px; flex-direction: column; align-items: stretch;">
+    <h2 style="margin-bottom: 25px;">Nova Tarefa</h2>
 
-    <?php if ($erro): ?>
-        <div class="alert alert-error"><?php echo $erro; ?></div>
+    <?php if ($err): ?>
+        <p style="color: var(--perigo); margin-bottom: 15px;"><?= $err ?></p>
     <?php endif; ?>
 
     <form method="POST">
-        <div class="form-group">
-            <label>Título da Tarefa</label>
-            <input type="text" name="titulo" class="form-control" required>
+        <div class="campo-grupo">
+            <label>Título</label>
+            <input type="text" name="titulo" class="campo-txt" required>
         </div>
 
-        <div class="form-group">
+        <div class="campo-grupo" style="margin-top: 15px;">
             <label>Descrição</label>
-            <textarea name="descricao" class="form-control" rows="4" required></textarea>
+            <textarea name="descricao" class="campo-txt" rows="3" required></textarea>
         </div>
 
-        <div class="form-group">
+        <div class="campo-grupo" style="margin-top: 15px;">
             <label>Data Limite</label>
-            <input type="date" name="data_limite" class="form-control" required min="<?php echo date('Y-m-d'); ?>">
+            <input type="date" name="data_limite" class="campo-txt" required min="<?= date('Y-m-d') ?>">
         </div>
 
-        <div class="form-group">
+        <div class="campo-grupo" style="margin-top: 15px;">
             <label>Responsável</label>
-            <select name="responsavel_id" class="form-control" required>
-                <option value="">Selecione um usuário</option>
-                <?php foreach ($usuarios as $u): ?>
-                    <option value="<?php echo $u['id']; ?>"><?php echo $u['nome']; ?></option>
+            <select name="responsavel_id" class="campo-txt" required>
+                <option value="">Selecione...</option>
+                <?php foreach ($users as $u): ?>
+                    <option value="<?= $u['id'] ?>"><?= $u['nome'] ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
 
-        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-            <button type="submit" class="btn btn-primary" style="flex: 1;">Salvar Tarefa</button>
-            <a href="index.php" class="btn btn-outline" style="flex: 1;">Cancelar</a>
+        <div style="display: flex; gap: 15px; margin-top: 30px;">
+            <button type="submit" class="btn btn-principal" style="flex: 1;">SALVAR</button>
+            <a href="index.php" class="btn btn-contorno" style="flex: 1; text-align: center;">CANCELAR</a>
         </div>
     </form>
 </div>

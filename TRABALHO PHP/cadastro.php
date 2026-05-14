@@ -1,83 +1,82 @@
 <?php
-// cadastro.php
+// Página de Cadastro de novos usuários
 require_once 'includes/functions.php';
-session_start();
 
+// Se já estiver logado, não precisa cadastrar
 if (isset($_SESSION['usuario_id'])) {
     header('Location: index.php');
     exit;
 }
 
-$erro = "";
-$sucesso = "";
+$err = "";
+$ok = "";
 
+// Processa o envio do formulário
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nome = sanitize($_POST['nome']);
-    $email = sanitize($_POST['email']);
-    $senha = $_POST['senha'];
+    $nome = filtrar($_POST['nome']);
+    $mail = filtrar($_POST['email']);
+    $pass = $_POST['senha'];
 
-    if (empty($nome) || empty($email) || empty($senha)) {
-        $erro = "Todos os campos são obrigatórios.";
-    } else {
-        $usuarios = getData('usuarios');
+    // Valida se todos os campos foram preenchidos
+    if ($nome && $mail && $pass) {
+        $users = buscarDados('usuarios');
         
-        // Validar e-mail duplicado
-        $duplicado = false;
-        foreach ($usuarios as $u) {
-            if ($u['email'] === $email) {
-                $duplicado = true;
-                break;
-            }
+        $existe = false;
+        // Verifica se o e-mail já existe no sistema
+        foreach ($users as $u) {
+            if ($u['email'] === $mail) { $existe = true; break; }
         }
 
-        if ($duplicado) {
-            $erro = "Este e-mail já está cadastrado.";
+        if ($existe) {
+            $err = "E-mail já cadastrado.";
         } else {
-            $novoUsuario = [
+            // Cria o novo usuário com senha criptografada (Hash)
+            $users[] = [
                 'id' => uniqid(),
                 'nome' => $nome,
-                'email' => $email,
-                'senha' => password_hash($senha, PASSWORD_DEFAULT)
+                'email' => $mail,
+                'senha' => password_hash($pass, PASSWORD_DEFAULT)
             ];
-            $usuarios[] = $novoUsuario;
-            saveData('usuarios', $usuarios);
-            $sucesso = "Conta criada com sucesso! <a href='login.php'>Faça login agora</a>.";
+            salvarDados('usuarios', $users);
+            $ok = "Conta criada! Já pode entrar.";
         }
+    } else {
+        $err = "Preencha tudo.";
     }
 }
 
 include 'includes/header.php';
 ?>
 
-<div class="auth-card">
-    <h2 style="margin-bottom: 1.5rem; text-align: center;">Criar Conta</h2>
+<div class="centralizar-cartao barra-filtros" style="flex-direction: column; align-items: stretch;">
+    <h2 style="margin-bottom: 20px; text-align: center;">Criar Conta</h2>
     
-    <?php if ($erro): ?>
-        <div class="alert alert-error"><?php echo $erro; ?></div>
+    <?php if ($err): ?>
+        <p style="color: var(--perigo); margin-bottom: 15px; text-align: center;"><?= $err ?></p>
     <?php endif; ?>
     
-    <?php if ($sucesso): ?>
-        <div class="alert alert-success"><?php echo $sucesso; ?></div>
+    <?php if ($ok): ?>
+        <p style="color: var(--sucesso); margin-bottom: 15px; text-align: center;"><?= $ok ?></p>
     <?php endif; ?>
 
     <form method="POST">
-        <div class="form-group">
+        <div class="campo-grupo">
             <label>Nome Completo</label>
-            <input type="text" name="nome" class="form-control" required>
+            <input type="text" name="nome" class="campo-txt" placeholder="Ex: Pedro Silva" required>
         </div>
-        <div class="form-group">
+        <div class="campo-grupo" style="margin-top: 15px;">
             <label>E-mail</label>
-            <input type="email" name="email" class="form-control" required>
+            <input type="email" name="email" class="campo-txt" placeholder="seu@email.com" required>
         </div>
-        <div class="form-group">
+        <div class="campo-grupo" style="margin-top: 15px;">
             <label>Senha</label>
-            <input type="password" name="senha" class="form-control" required>
+            <input type="password" name="senha" class="campo-txt" placeholder="Mínimo 6 caracteres" required minlength="6">
         </div>
-        <button type="submit" class="btn btn-primary" style="width: 100%;">Cadastrar</button>
+        <button type="submit" class="btn btn-principal" style="width: 100%; margin-top: 25px;">CADASTRAR</button>
     </form>
     
-    <p style="margin-top: 1.5rem; text-align: center; font-size: 0.875rem;">
-        Já possui conta? <a href="login.php" style="color: var(--primary); font-weight: 600;">Entrar</a>
+    <p style="margin-top: 20px; text-align: center; font-size: 0.9rem;">
+        Já tem conta? <a href="login.php" style="color: var(--destaque);">Faça login</a>
     </p>
 </div>
 

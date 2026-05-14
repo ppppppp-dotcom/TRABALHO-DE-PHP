@@ -1,56 +1,64 @@
 <?php
-// login.php
+// Carrega as funções globais do sistema
 require_once 'includes/functions.php';
-session_start();
 
+// Se o usuário já estiver logado, redireciona direto para a página inicial
+// pois não faz sentido uma pessoa logada tentar acessar a tela de login
 if (isset($_SESSION['usuario_id'])) {
     header('Location: index.php');
     exit;
 }
 
-$erro = "";
+$err = "";
 
+// Verifica se o formulário foi enviado via método POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = sanitize($_POST['email']);
-    $senha = $_POST['senha'];
+    // Filtra o e-mail para prevenir injeção de scripts e outros problemas de segurança
+    $mail = filtrar($_POST['email']);
+    $pass = $_POST['senha'];
 
-    $usuarios = getData('usuarios');
-    foreach ($usuarios as $u) {
-        if ($u['email'] === $email && password_verify($senha, $u['senha'])) {
+    // Busca todos os usuários armazenados no arquivo JSON
+    $users = buscarDados('usuarios');
+    foreach ($users as $u) {
+        // Verifica se o e-mail corresponde e se a senha digitada é compatível com o hash salvo
+        if ($u['email'] === $mail && password_verify($pass, $u['senha'])) {
+            // Se as credenciais estiverem corretas, iniciamos a sessão do usuário
             $_SESSION['usuario_id'] = $u['id'];
             $_SESSION['usuario_nome'] = $u['nome'];
-            $_SESSION['usuario_email'] = $u['email'];
             header('Location: index.php');
             exit;
         }
     }
-    $erro = "E-mail ou senha incorretos.";
+    // Caso o loop termine sem encontrar o usuário ou a senha falhe, definimos a mensagem de erro
+    $err = "E-mail ou senha incorretos.";
 }
 
+// Inclui o cabeçalho da página
 include 'includes/header.php';
 ?>
 
-<div class="auth-card">
-    <h2 style="margin-bottom: 1.5rem; text-align: center;">Acessar Conta</h2>
+<!-- Container centralizado para o formulário de login -->
+<div class="centralizar-cartao barra-filtros" style="flex-direction: column; align-items: stretch;">
+    <h2 style="margin-bottom: 20px; text-align: center;">Acessar</h2>
     
-    <?php if ($erro): ?>
-        <div class="alert alert-error"><?php echo $erro; ?></div>
+    <?php if ($err): ?>
+        <p style="color: var(--perigo); margin-bottom: 15px; text-align: center;"><?= $err ?></p>
     <?php endif; ?>
 
     <form method="POST">
-        <div class="form-group">
+        <div class="campo-grupo">
             <label>E-mail</label>
-            <input type="email" name="email" class="form-control" required>
+            <input type="email" name="email" class="campo-txt" placeholder="seu@email.com" required>
         </div>
-        <div class="form-group">
+        <div class="campo-grupo" style="margin-top: 15px;">
             <label>Senha</label>
-            <input type="password" name="senha" class="form-control" required>
+            <input type="password" name="senha" class="campo-txt" placeholder="******" required>
         </div>
-        <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar</button>
+        <button type="submit" class="btn btn-principal" style="width: 100%; margin-top: 25px;">ENTRAR</button>
     </form>
     
-    <p style="margin-top: 1.5rem; text-align: center; font-size: 0.875rem;">
-        Não tem uma conta? <a href="cadastro.php" style="color: var(--primary); font-weight: 600;">Cadastre-se</a>
+    <p style="margin-top: 20px; text-align: center; font-size: 0.9rem;">
+        Novo por aqui? <a href="cadastro.php" style="color: var(--destaque);">Crie sua conta</a>
     </p>
 </div>
 

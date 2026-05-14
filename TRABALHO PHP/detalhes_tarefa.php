@@ -1,61 +1,65 @@
 <?php
-// detalhes_tarefa.php
+// Página de Detalhes e Gestão de uma Tarefa específica
 require_once 'includes/functions.php';
-checkAuth();
+validarLogin();
 
-$taskId = $_GET['id'] ?? '';
-$tarefas = getData('tarefas');
-$task = null;
-$taskIndex = -1;
+// Pega o ID da URL e busca no arquivo de tarefas
+$id = $_GET['id'] ?? '';
+$list = buscarDados('tarefas');
+$t = null;
+$pos = -1;
 
-foreach ($tarefas as $index => $t) {
-    if ($t['id'] === $taskId) {
-        $task = $t;
-        $taskIndex = $index;
+// Loop para encontrar a tarefa no array pelo ID
+foreach ($list as $i => $item) {
+    if ($item['id'] === $id) {
+        $t = $item;
+        $pos = $i;
         break;
     }
 }
 
-if (!$task) {
+// Se a tarefa não existir, volta para a lista principal
+if (!$t) {
     header('Location: index.php');
     exit;
 }
 
-// Permissões
-$podeAlterarStatus = ($_SESSION['usuario_id'] === $task['criador_id'] || $_SESSION['usuario_id'] === $task['responsavel_id']);
-$podeEditarExcluir = ($_SESSION['usuario_id'] === $task['criador_id']);
+// Regras de Negócio/Permissões
+$my_id = $_SESSION['usuario_id'];
+// Responsável e Criador podem mudar o status
+$can_status = ($my_id === $t['criador_id'] || $my_id === $t['responsavel_id']);
+// Apenas o criador pode editar ou excluir os dados básicos
+$can_edit = ($my_id === $t['criador_id']);
 
-// Processar Novo Comentário
+// Lógica para adicionar novo Comentário
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comentario'])) {
-    $texto = sanitize($_POST['comentario']);
-    if (!empty($texto)) {
-        $tarefas[$taskIndex]['comentarios'][] = [
+    $txt = filtrar($_POST['comentario']);
+    if ($txt) {
+        $list[$pos]['comentarios'][] = [
             'usuario' => $_SESSION['usuario_nome'],
-            'texto' => $texto,
-            'data_hora' => date('d/m/Y H:i:s')
+            'texto' => $txt,
+            'data' => date('d/m/Y H:i')
         ];
-        saveData('tarefas', $tarefas);
-        header("Location: detalhes_tarefa.php?id=$taskId");
+        salvarDados('tarefas', $list);
+        header("Location: detalhes_tarefa.php?id=$id");
         exit;
     }
 }
 
-// Processar Alteração de Status
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['novo_status']) && $podeAlterarStatus) {
-    $novoStatus = $_POST['novo_status'];
-    if ($novoStatus !== $task['status']) {
-        $statusAntigo = $task['status'];
-        $tarefas[$taskIndex]['status'] = $novoStatus;
-        
-        // Registrar no histórico
-        $tarefas[$taskIndex]['historico'][] = [
+// Lógica para alterar o Status da tarefa
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status']) && $can_status) {
+    $novo = $_POST['status'];
+    if ($novo !== $t['status']) {
+        $old = $t['status'];
+        $list[$pos]['status'] = $novo;
+        // Salva a alteração no histórico para auditoria
+        $list[$pos]['historico'][] = [
             'usuario' => $_SESSION['usuario_nome'],
-            'mensagem' => "Alterou o status de '$statusAntigo' para '$novoStatus'.",
-            'data_hora' => date('d/m/Y H:i:s')
+            'mensagem' => "Mudou o status de '$old' para '$novo'",
+            'data' => date('d/m/Y H:i')
         ];
-        
-        saveData('tarefas', $tarefas);
-        header("Location: detalhes_tarefa.php?id=$taskId");
+        salvarDados('tarefas', $list);
+        header("Location: detalhes_tarefa.php?id=$id");
         exit;
     }
 }
@@ -63,91 +67,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['novo_status']) && $po
 include 'includes/header.php';
 ?>
 
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
-    <!-- Coluna Principal -->
+<div class="grade-tarefas" style="grid-template-columns: 2fr 1fr;">
+    <!-- Lado Esquerdo: Detalhes da Tarefa e Comentários -->
     <div>
-        <div style="background: var(--card-bg); padding: 2rem; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
-                <h1><?php echo $task['titulo']; ?></h1>
-                <div style="display: flex; gap: 0.5rem;">
-                    <?php if ($podeEditarExcluir): ?>
-                        <a href="editar_tarefa.php?id=<?php echo $task['id']; ?>" class="btn btn-outline" style="padding: 0.5rem 1rem;">Editar</a>
-                        <a href="excluir_tarefa.php?id=<?php echo $task['id']; ?>" class="btn btn-danger" style="padding: 0.5rem 1rem;" onclick="return confirm('Tem certeza que deseja excluir?')">Excluir</a>
+        <div class="cartao-tarefa" style="padding: 30px;">
+            <div class="topo-pagina">
+                <h1><?= $t['titulo'] ?></h1>
+                <div>
+                    <?php if ($can_edit): ?>
+                        <a href="editar_tarefa.php?id=<?= $id ?>" class="btn btn-contorno">Editar</a>
+                        <a href="excluir_tarefa.php?id=<?= $id ?>" class="btn btn-principal"
+                            style="background: var(--perigo);"
+                            onclick="return confirm('Excluir esta tarefa definitivamente?')">Excluir</a>
                     <?php endif; ?>
                 </div>
             </div>
 
-            <p style="white-space: pre-wrap; color: var(--text-main); margin-bottom: 2rem; line-height: 1.6;">
-                <?php echo $task['descricao']; ?>
-            </p>
+            <p style="margin-bottom: 25px; white-space: pre-wrap;"><?= nl2br($t['descricao']) ?></p>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding: 1.5rem; background: var(--bg-light); border-radius: 8px;">
-                <div>
-                    <small style="color: var(--text-muted); display: block;">Criado por:</small>
-                    <strong><?php echo $task['criador_nome']; ?></strong>
-                </div>
-                <div>
-                    <small style="color: var(--text-muted); display: block;">Responsável:</small>
-                    <strong><?php echo $task['responsavel_nome']; ?></strong>
-                </div>
-                <div>
-                    <small style="color: var(--text-muted); display: block;">Prazo Final:</small>
-                    <strong><?php echo date('d/m/Y', strtotime($task['data_limite'])); ?></strong>
-                </div>
-                <div>
-                    <small style="color: var(--text-muted); display: block;">Status Atual:</small>
-                    <span class="badge badge-<?php echo strtolower(str_replace(' ', '-', $task['status'])); ?>">
-                        <?php echo $task['status']; ?>
-                    </span>
-                </div>
+            <!-- Grid de Informações Básicas -->
+            <div class="barra-filtros"
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: var(--fundo);">
+                <span>Criador: <b><?= $t['criador_nome'] ?></b></span>
+                <span>Responsável: <b><?= $t['responsavel_nome'] ?></b></span>
+                <span>Prazo Final: <b><?= date('d/m/Y', strtotime($t['data_limite'])) ?></b></span>
+                <span>Status: <b
+                        class="etiqueta etiqueta-<?= strtolower(str_replace(' ', '-', $t['status'])) ?>"><?= $t['status'] ?></b></span>
             </div>
 
-            <?php if ($podeAlterarStatus): ?>
-                <form method="POST" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border);">
-                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Atualizar Status:</label>
-                    <div style="display: flex; gap: 1rem;">
-                        <select name="novo_status" class="form-control" style="max-width: 250px;">
-                            <option value="Pendente" <?php echo $task['status'] === 'Pendente' ? 'selected' : ''; ?>>Pendente</option>
-                            <option value="Em andamento" <?php echo $task['status'] === 'Em andamento' ? 'selected' : ''; ?>>Em andamento</option>
-                            <option value="Concluída" <?php echo $task['status'] === 'Concluída' ? 'selected' : ''; ?>>Concluída</option>
+            <?php if ($can_status): ?>
+                <!-- Formulário para troca rápida de status -->
+                <form method="POST" style="margin-top: 30px; border-top: 1px solid var(--borda); padding-top: 20px;">
+                    <label>Atualizar Status:</label>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <select name="status" class="campo-txt" style="width: 200px;">
+                            <option value="Pendente" <?= $t['status'] == 'Pendente' ? 'selected' : '' ?>>Pendente</option>
+                            <option value="Em andamento" <?= $t['status'] == 'Em andamento' ? 'selected' : '' ?>>Em andamento
+                            </option>
+                            <option value="Concluída" <?= $t['status'] == 'Concluída' ? 'selected' : '' ?>>Concluída</option>
                         </select>
-                        <button type="submit" class="btn btn-primary">Atualizar</button>
+                        <button type="submit" class="btn btn-principal">SALVAR</button>
                     </div>
                 </form>
             <?php endif; ?>
         </div>
 
-        <!-- Comentários -->
-        <div class="comments-section" style="background: var(--card-bg); padding: 2rem; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border);">
-            <h3 style="margin-bottom: 1.5rem;">Comentários (<?php echo count($task['comentarios']); ?>)</h3>
-            
-            <form method="POST" style="margin-bottom: 2rem;">
-                <textarea name="comentario" class="form-control" rows="3" placeholder="Escreva um comentário..." required></textarea>
-                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Enviar Comentário</button>
+        <!-- Seção de Comentários (Interação entre usuários) -->
+        <div class="cartao-tarefa" style="margin-top: 25px; padding: 30px;">
+            <h3>Comentários (<?= count($t['comentarios']) ?>)</h3>
+            <form method="POST" style="margin-top: 20px;">
+                <textarea name="comentario" class="campo-txt" placeholder="Escreva uma atualização ou dúvida..."
+                    required></textarea>
+                <button type="submit" class="btn btn-principal" style="margin-top: 10px;">ENVIAR COMENTÁRIO</button>
             </form>
 
-            <?php foreach (array_reverse($task['comentarios']) as $comentario): ?>
-                <div class="comment">
-                    <div class="comment-meta">
-                        <?php echo $comentario['usuario']; ?> &bull; <?php echo $comentario['data_hora']; ?>
+            <div style="margin-top: 30px;">
+                <?php foreach (array_reverse($t['comentarios']) as $c): ?>
+                    <div
+                        style="margin-bottom: 15px; padding: 15px; background: var(--fundo); border-radius: 4px; border-left: 4px solid var(--destaque);">
+                        <small style="color: var(--texto-suave);"><b><?= $c['usuario'] ?></b> • <?= $c['data'] ?></small>
+                        <p style="font-size: 0.95rem; margin-top: 8px;"><?= nl2br($c['texto']) ?></p>
                     </div>
-                    <div style="font-size: 0.9375rem;"><?php echo nl2br($comentario['texto']); ?></div>
-                </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            </div>
         </div>
     </div>
 
-    <!-- Coluna Lateral: Histórico -->
+    <!-- Lado Direito: Histórico de Alterações -->
     <div>
-        <div style="background: var(--card-bg); padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border);">
-            <h3 style="margin-bottom: 1rem; font-size: 1.125rem;">Histórico de Alterações</h3>
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
-                <?php foreach (array_reverse($task['historico']) as $log): ?>
-                    <div style="font-size: 0.8125rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
-                        <div style="color: var(--text-muted); margin-bottom: 0.25rem;">
-                            <strong><?php echo $log['usuario']; ?></strong> em <?php echo $log['data_hora']; ?>
-                        </div>
-                        <div style="font-weight: 500;"><?php echo $log['mensagem']; ?></div>
+        <div class="cartao-tarefa" style="padding: 20px;">
+            <h3 style="font-size: 1.1rem;">Histórico de Ações</h3>
+            <div style="margin-top: 15px;">
+                <?php foreach (array_reverse($t['historico']) as $h): ?>
+                    <div
+                        style="font-size: 0.8rem; margin-bottom: 12px; border-bottom: 1px solid var(--borda); padding-bottom: 8px;">
+                        <span style="color: var(--destaque); font-weight: 700;"><?= $h['usuario'] ?></span><br>
+                        <span style="color: var(--texto-suave);"><?= $h['data'] ?></span><br>
+                        <p style="margin-top: 4px;"><?= $h['mensagem'] ?></p>
                     </div>
                 <?php endforeach; ?>
             </div>

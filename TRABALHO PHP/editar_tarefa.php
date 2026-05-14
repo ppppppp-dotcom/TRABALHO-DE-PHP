@@ -1,111 +1,111 @@
 <?php
-// editar_tarefa.php
+// Página para editar tarefas existentes
 require_once 'includes/functions.php';
-checkAuth();
+validarLogin();
 
-$taskId = $_GET['id'] ?? '';
-$tarefas = getData('tarefas');
-$usuarios = getData('usuarios');
-$task = null;
-$taskIndex = -1;
+$id = $_GET['id'] ?? '';
+$list = buscarDados('tarefas');
+$users = buscarDados('usuarios');
+$t = null;
+$pos = -1;
 
-foreach ($tarefas as $index => $t) {
-    if ($t['id'] === $taskId) {
-        $task = $t;
-        $taskIndex = $index;
-        break;
-    }
+// Busca a tarefa específica pelo ID
+foreach ($list as $i => $item) {
+    if ($item['id'] === $id) { $t = $item; $pos = $i; break; }
 }
 
-// Apenas o criador pode editar
-if (!$task || $task['criador_id'] !== $_SESSION['usuario_id']) {
+// Segurança: Apenas o criador da tarefa pode editá-la
+if (!$t || $t['criador_id'] !== $_SESSION['usuario_id']) {
     header('Location: index.php');
     exit;
 }
 
-$erro = "";
+$err = "";
 
+// Processa a edição ao enviar o formulário
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $titulo = sanitize($_POST['titulo']);
-    $descricao = sanitize($_POST['descricao']);
-    $data_limite = $_POST['data_limite'];
-    $responsavel_id = $_POST['responsavel_id'];
+    $tit = filtrar($_POST['titulo']);
+    $desc = filtrar($_POST['descricao']);
+    $fim = $_POST['data_limite'];
+    $resp = $_POST['responsavel_id'];
 
-    if (empty($titulo) || empty($data_limite) || empty($responsavel_id)) {
-        $erro = "Preencha todos os campos obrigatórios.";
-    } else {
-        // Detectar mudanças para o histórico
-        $mudancas = [];
-        if ($titulo !== $task['titulo']) $mudancas[] = "alterou o título";
-        if ($descricao !== $task['descricao']) $mudancas[] = "editou a descrição";
-        if ($data_limite !== $task['data_limite']) $mudancas[] = "alterou o prazo para " . date('d/m/Y', strtotime($data_limite));
-        if ($responsavel_id !== $task['responsavel_id']) {
-            $novo_resp_nome = "";
-            foreach ($usuarios as $u) if ($u['id'] === $responsavel_id) $novo_resp_nome = $u['nome'];
-            $mudancas[] = "alterou o responsável para $novo_resp_nome";
-            $tarefas[$taskIndex]['responsavel_nome'] = $novo_resp_nome;
-        }
+    if ($tit && $fim && $resp) {
+        // Verifica se houve alguma mudança real
+        $mudou = false;
+        if ($tit !== $t['titulo']) $mudou = true;
+        if ($desc !== $t['descricao']) $mudou = true;
+        if ($fim !== $t['data_limite']) $mudou = true;
+        if ($resp !== $t['responsavel_id']) $mudou = true;
 
-        if (!empty($mudancas)) {
-            $tarefas[$taskIndex]['titulo'] = $titulo;
-            $tarefas[$taskIndex]['descricao'] = $descricao;
-            $tarefas[$taskIndex]['data_limite'] = $data_limite;
-            $tarefas[$taskIndex]['responsavel_id'] = $responsavel_id;
+        if ($mudou) {
+            // Atualiza os dados no array
+            $list[$pos]['titulo'] = $tit;
+            $list[$pos]['descricao'] = $desc;
+            $list[$pos]['data_limite'] = $fim;
+            $list[$pos]['responsavel_id'] = $resp;
+            
+            // Atualiza o nome do responsável se ele foi trocado
+            foreach ($users as $u) if ($u['id'] === $resp) $list[$pos]['responsavel_nome'] = $u['nome'];
 
-            $tarefas[$taskIndex]['historico'][] = [
+            // Adiciona uma entrada no histórico informando a edição
+            $list[$pos]['historico'][] = [
                 'usuario' => $_SESSION['usuario_nome'],
-                'mensagem' => "Editou a tarefa: " . implode(', ', $mudancas) . ".",
-                'data_hora' => date('d/m/Y H:i:s')
+                'mensagem' => "Editou os dados da tarefa.",
+                'data' => date('d/m/Y H:i')
             ];
 
-            saveData('tarefas', $tarefas);
+            // Salva as alterações no arquivo JSON
+            salvarDados('tarefas', $list);
         }
         
-        header("Location: detalhes_tarefa.php?id=$taskId");
+        // Redireciona de volta para a página de detalhes
+        header("Location: detalhes_tarefa.php?id=$id");
         exit;
+    } else {
+        $err = "Preencha tudo.";
     }
 }
 
 include 'includes/header.php';
 ?>
 
-<div style="max-width: 600px; margin: 0 auto; background: var(--card-bg); padding: 2rem; border-radius: 12px; box-shadow: var(--shadow);">
-    <h2 style="margin-bottom: 2rem;">Editar Tarefa</h2>
+<div class="centralizar-cartao barra-filtros" style="max-width: 600px; flex-direction: column; align-items: stretch;">
+    <h2 style="margin-bottom: 25px;">Editar Tarefa</h2>
 
-    <?php if ($erro): ?>
-        <div class="alert alert-error"><?php echo $erro; ?></div>
+    <?php if ($err): ?>
+        <p style="color: var(--perigo); margin-bottom: 15px;"><?= $err ?></p>
     <?php endif; ?>
 
     <form method="POST">
-        <div class="form-group">
-            <label>Título da Tarefa</label>
-            <input type="text" name="titulo" class="form-control" value="<?php echo $task['titulo']; ?>" required>
+        <div class="campo-grupo">
+            <label>Título</label>
+            <input type="text" name="titulo" class="campo-txt" value="<?= $t['titulo'] ?>" required>
         </div>
 
-        <div class="form-group">
+        <div class="campo-grupo" style="margin-top: 15px;">
             <label>Descrição</label>
-            <textarea name="descricao" class="form-control" rows="4" required><?php echo $task['descricao']; ?></textarea>
+            <textarea name="descricao" class="campo-txt" rows="3" required><?= $t['descricao'] ?></textarea>
         </div>
 
-        <div class="form-group">
+        <div class="campo-grupo" style="margin-top: 15px;">
             <label>Data Limite</label>
-            <input type="date" name="data_limite" class="form-control" value="<?php echo $task['data_limite']; ?>" required>
+            <input type="date" name="data_limite" class="campo-txt" value="<?= $t['data_limite'] ?>" required>
         </div>
 
-        <div class="form-group">
+        <div class="campo-grupo" style="margin-top: 15px;">
             <label>Responsável</label>
-            <select name="responsavel_id" class="form-control" required>
-                <?php foreach ($usuarios as $u): ?>
-                    <option value="<?php echo $u['id']; ?>" <?php echo $u['id'] === $task['responsavel_id'] ? 'selected' : ''; ?>>
-                        <?php echo $u['nome']; ?>
+            <select name="responsavel_id" class="campo-txt" required>
+                <?php foreach ($users as $u): ?>
+                    <option value="<?= $u['id'] ?>" <?= $u['id'] === $t['responsavel_id'] ? 'selected' : '' ?>>
+                        <?= $u['nome'] ?>
                     </option>
                 <?php endforeach; ?>
             </select>
         </div>
 
-        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-            <button type="submit" class="btn btn-primary" style="flex: 1;">Salvar Alterações</button>
-            <a href="detalhes_tarefa.php?id=<?php echo $taskId; ?>" class="btn btn-outline" style="flex: 1;">Cancelar</a>
+        <div style="display: flex; gap: 15px; margin-top: 30px;">
+            <button type="submit" class="btn btn-principal" style="flex: 1;">ATUALIZAR</button>
+            <a href="detalhes_tarefa.php?id=<?= $id ?>" class="btn btn-contorno" style="flex: 1; text-align: center;">VOLTAR</a>
         </div>
     </form>
 </div>

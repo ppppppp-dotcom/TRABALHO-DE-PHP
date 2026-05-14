@@ -1,31 +1,23 @@
 <?php
-// excluir_tarefa.php
 require_once 'includes/functions.php';
-checkAuth();
+validarLogin();
 
-$taskId = $_GET['id'] ?? '';
-$tarefas = getData('tarefas');
-$novaLista = [];
-$encontrou = false;
+$id = $_GET['id'] ?? '';
+$tarefas = buscarDados('tarefas');
+$nova = [];
 
 foreach ($tarefas as $t) {
-    if ($t['id'] === $taskId) {
-        // Apenas o criador pode excluir
-        if ($t['criador_id'] === $_SESSION['usuario_id']) {
-            $encontrou = true;
-            continue; // Pula a adição à nova lista (exclui)
-        } else {
-            header('Location: index.php?erro=sem_permissao');
+    if ($t['id'] === $id) {
+        if ($t['criador_id'] !== $_SESSION['usuario_id']) {
+            header('Location: index.php');
             exit;
         }
+        continue;
     }
-    $novaLista[] = $t;
+    $nova[] = $t;
 }
 
-if ($encontrou) {
-    saveData('tarefas', $novaLista);
-}
-
+salvarDados('tarefas', $nova);
 header('Location: index.php');
 exit;
 ?>

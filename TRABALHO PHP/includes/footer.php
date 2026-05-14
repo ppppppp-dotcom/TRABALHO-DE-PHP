@@ -1,6 +1,7 @@
-    </main>
-    <footer style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.875rem;">
-        <p>&copy; <?php echo date('Y'); ?> - Gerenciador de Tarefas Colaborativo</p>
-    </footer>
+</main>
+<footer style="text-align: center; padding: 40px; color: var(--texto-suave); font-size: 0.8rem;">
+    <p>&copy; <?= date('Y') ?> - TaskCollab</p>
+</footer>
 </body>
+
 </html>

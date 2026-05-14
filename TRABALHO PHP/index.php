@@ -1,105 +1,110 @@
 <?php
-// index.php
+// Carrega o arquivo de funções e verifica se o usuário está logado
 require_once 'includes/functions.php';
-checkAuth();
+validarLogin();
 
-// Nomes e RGMs dos integrantes (conforme requisito 12)
-/*
-   Integrantes:
-   - Pedro Silva (RGM: 1234567-8)
-   - Maria Oliveira (RGM: 8765432-1)
-*/
+// Busca a lista de tarefas e a lista de usuários cadastrados nos arquivos JSON
+$tasks = buscarDados('tarefas');
+$users = buscarDados('usuarios');
 
-$tarefas = getData('tarefas');
-$usuarios = getData('usuarios');
+// Lógica de Filtros: Pega o valor enviado via GET ou via Cookie (persistência)
+// O operador ?? serve para pegar o primeiro valor que não seja nulo (valor enviado > cookie > vazio)
+$st = $_GET['status'] ?? $_COOKIE['st'] ?? '';
+$re = $_GET['responsavel'] ?? $_COOKIE['re'] ?? '';
 
-// Filtros
-$filtro_status = isset($_GET['status']) ? $_GET['status'] : (isset($_COOKIE['last_filter_status']) ? $_COOKIE['last_filter_status'] : '');
-$filtro_responsavel = isset($_GET['responsavel']) ? $_GET['responsavel'] : (isset($_COOKIE['last_filter_resp']) ? $_COOKIE['last_filter_resp'] : '');
+// Salva a escolha do filtro em um Cookie por 1 hora para o usuário não perder a seleção ao navegar
+setcookie('st', $st, time() + 3600);
+setcookie('re', $re, time() + 3600);
 
-// Salvar filtros em cookies para persistência (requisito 8)
-setcookie('last_filter_status', $filtro_status, time() + 3600);
-setcookie('last_filter_resp', $filtro_responsavel, time() + 3600);
-
-$filteredTasks = array_filter($tarefas, function($t) use ($filtro_status, $filtro_responsavel) {
-    $matchStatus = $filtro_status === '' || $t['status'] === $filtro_status;
-    $matchResp = $filtro_responsavel === '' || $t['responsavel_id'] === $filtro_responsavel;
-    return $matchStatus && $matchResp;
+// Aplica a filtragem no array de tarefas
+$itens = array_filter($tasks, function($t) use ($st, $re) {
+    // Verifica se o status bate com o filtro ou se o filtro está vazio (mostrar todos)
+    $ok1 = $st === '' || $t['status'] === $st;
+    // Verifica se o responsável bate com o filtro ou se o filtro está vazio
+    $ok2 = $re === '' || $t['responsavel_id'] === $re;
+    return $ok1 && $ok2;
 });
 
-// Ordenar por data limite
-usort($filteredTasks, function($a, $b) {
-    return strtotime($a['data_limite']) - strtotime($b['data_limite']);
+// Ordena a lista de tarefas pela data limite (da mais próxima para a mais distante)
+// O operador <=> (spaceship) compara dois valores de forma simplificada
+usort($itens, function($a, $b) {
+    return strtotime($a['data_limite']) <=> strtotime($b['data_limite']);
 });
 
+// Inclui o cabeçalho do site
 include 'includes/header.php';
 ?>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+<!-- Cabeçalho da página com botão de nova tarefa -->
+<div class="topo-pagina">
     <h1>Minhas Tarefas</h1>
-    <a href="nova_tarefa.php" class="btn btn-primary">+ Nova Tarefa</a>
+    <a href="nova_tarefa.php" class="btn btn-principal">+ Nova Tarefa</a>
 </div>
 
-<form method="GET" class="filters-bar">
-    <div class="form-group" style="margin-bottom: 0;">
+<!-- Formulário de Filtros (Envia via GET para que a URL possa ser compartilhada) -->
+<form method="GET" class="barra-filtros">
+    <div class="campo-grupo">
         <label>Status</label>
-        <select name="status" class="form-control">
+        <select name="status" class="campo-txt">
             <option value="">Todos</option>
-            <option value="Pendente" <?php echo $filtro_status === 'Pendente' ? 'selected' : ''; ?>>Pendente</option>
-            <option value="Em andamento" <?php echo $filtro_status === 'Em andamento' ? 'selected' : ''; ?>>Em andamento</option>
-            <option value="Concluída" <?php echo $filtro_status === 'Concluída' ? 'selected' : ''; ?>>Concluída</option>
+            <option value="Pendente" <?= $st == 'Pendente' ? 'selected' : '' ?>>Pendente</option>
+            <option value="Em andamento" <?= $st == 'Em andamento' ? 'selected' : '' ?>>Em andamento</option>
+            <option value="Concluída" <?= $st == 'Concluída' ? 'selected' : '' ?>>Concluída</option>
         </select>
     </div>
     
-    <div class="form-group" style="margin-bottom: 0;">
+    <div class="campo-grupo">
         <label>Responsável</label>
-        <select name="responsavel" class="form-control">
+        <select name="responsavel" class="campo-txt">
             <option value="">Todos</option>
-            <?php foreach ($usuarios as $u): ?>
-                <option value="<?php echo $u['id']; ?>" <?php echo $filtro_responsavel === $u['id'] ? 'selected' : ''; ?>>
-                    <?php echo $u['nome']; ?>
+            <?php foreach ($users as $u): ?>
+                <option value="<?= $u['id'] ?>" <?= $re == $u['id'] ? 'selected' : '' ?>>
+                    <?= $u['nome'] ?>
                 </option>
             <?php endforeach; ?>
         </select>
     </div>
     
-    <button type="submit" class="btn btn-outline">Filtrar</button>
-    <a href="index.php" class="btn btn-outline" style="border-color: transparent;">Limpar</a>
+    <button type="submit" class="btn btn-contorno">Filtrar</button>
+    <a href="index.php" class="btn btn-limpar">Limpar</a>
 </form>
 
-<div class="task-grid">
-    <?php if (empty($filteredTasks)): ?>
-        <p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 3rem;">Nenhuma tarefa encontrada.</p>
+<!-- Exibição das tarefas em formato de grade (cards) -->
+<div class="grade-tarefas">
+    <?php if (empty($itens)): ?>
+        <p class="aviso-vazio">Nenhuma tarefa encontrada.</p>
     <?php else: ?>
-        <?php foreach ($filteredTasks as $task): ?>
-            <div class="task-card">
-                <div class="task-header">
-                    <span class="badge badge-<?php echo strtolower(str_replace(' ', '-', $task['status'])); ?>">
-                        <?php echo $task['status']; ?>
+        <?php foreach ($itens as $t): ?>
+            <!-- Card Individual da Tarefa -->
+            <div class="cartao-tarefa">
+                <div class="cartao-topo">
+                    <!-- Badge de status dinâmico com base no valor -->
+                    <span class="etiqueta etiqueta-<?= strtolower(str_replace(' ', '-', $t['status'])) ?>">
+                        <?= $t['status'] ?>
                     </span>
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">
-                        Prazo: <?php echo date('d/m/Y', strtotime($task['data_limite'])); ?>
+                    <span class="prazo">
+                        Prazo: <?= date('d/m/Y', strtotime($t['data_limite'])) ?>
                     </span>
                 </div>
                 
-                <h3 style="margin-bottom: 0.5rem;"><?php echo $task['titulo']; ?></h3>
-                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem; flex-grow: 1;">
-                    <?php echo substr($task['descricao'], 0, 100) . (strlen($task['descricao']) > 100 ? '...' : ''); ?>
-                </p>
+                <h3><?= $t['titulo'] ?></h3>
+                <!-- mb_strimwidth corta o texto se for muito longo para não quebrar o layout -->
+                <p class="resumo"><?= mb_strimwidth($t['descricao'], 0, 100, "...") ?></p>
                 
-                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-                    <a href="detalhes_tarefa.php?id=<?php echo $task['id']; ?>" class="btn btn-outline" style="flex: 1; padding: 0.5rem;">Ver Detalhes</a>
+                <div class="acoes-cartao">
+                    <a href="detalhes_tarefa.php?id=<?= $t['id'] ?>" class="btn btn-contorno">Ver Detalhes</a>
                 </div>
 
-                <div class="task-meta">
-                    <div style="display: flex; justify-content: space-between;">
-                        <span>Por: <strong><?php echo $task['criador_nome']; ?></strong></span>
-                        <span>Resp: <strong><?php echo $task['responsavel_nome']; ?></strong></span>
-                    </div>
+                <div class="rodape-cartao">
+                    <span>Criador: <b><?= $t['criador_nome'] ?></b></span>
+                    <span>Resp: <b><?= $t['responsavel_nome'] ?></b></span>
                 </div>
             </div>
         <?php endforeach; ?>
     <?php endif; ?>
 </div>
 
-<?php include 'includes/footer.php'; ?>
+<?php 
+// Inclui o rodapé do site
+include 'includes/footer.php'; 
+?>

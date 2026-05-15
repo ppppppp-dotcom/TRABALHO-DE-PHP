@@ -1,0 +1,272 @@
+/* 
+   Configurações Globais e Variáveis de Design
+   Usamos o :root para centralizar as cores e facilitar mudanças globais 
+*/
+:root {
+    --primaria: #2c3e50;      /* Cor azul marinho dos menus */
+    --secundaria: #34495e;    /* Variação do azul para contrastes */
+    --destaque: #e67e22;      /* Cor laranja para botões e links importantes */
+    --sucesso: #27ae60;       /* Verde para mensagens de sucesso e status concluído */
+    --alerta: #f1c40f;        /* Amarelo para status pendente */
+    --perigo: #e74c3c;        /* Vermelho para exclusão e erros */
+    --fundo: #f4f7f6;         /* Cor de fundo cinza bem claro */
+    --papel: #ffffff;         /* Cor branca para os cartões e áreas de conteúdo */
+    --texto: #2d3436;         /* Cor principal do texto */
+    --texto-suave: #636e72;   /* Cor cinza para textos menos importantes */
+    --borda: #dfe6e9;         /* Cor das bordas e divisórias */
+    --sombra: 0 10px 20px rgba(0,0,0,0.05); /* Sombra suave para dar profundidade */
+    --raio: 6px;              /* Arredondamento padrão dos cantos */
+}
+
+/* 
+   Variáveis para o Tema Escuro (Dark Mode)
+   Substituímos as cores de fundo e texto quando o atributo data-theme="dark" está presente 
+*/
+[data-theme="dark"] {
+    --fundo: #1a1a2e;
+    --papel: #16213e;
+    --texto: #e9e9e9;
+    --texto-suave: #a2a2a2;
+    --borda: #0f3460;
+}
+
+/* Reset básico para garantir que o site ignore comportamentos padrão dos navegadores */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background: var(--fundo);
+    color: var(--texto);
+    line-height: 1.6;
+    transition: all 0.3s; /* Transição suave ao mudar de tema */
+}
+
+/* Container central que limita a largura do conteúdo para não esticar demais em telas grandes */
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* 
+   Menu Superior (Header)
+   Usa Flexbox para colocar o logo de um lado e os links do outro 
+*/
+header {
+    background: var(--primaria);
+    color: white;
+    padding: 15px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.logo {
+    font-weight: 700;
+    font-size: 1.4rem;
+    text-decoration: none;
+    color: white;
+    letter-spacing: 1px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.nav-links a {
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.nav-links a:hover {
+    color: white;
+}
+
+/* 
+   Estilização Geral de Botões
+   Usamos transições e filtros para dar feedback visual ao usuário 
+*/
+.btn {
+    padding: 10px 20px;
+    border-radius: var(--raio);
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    transition: 0.3s;
+}
+
+.btn-principal {
+    background: var(--destaque);
+    color: white;
+}
+
+.btn-principal:hover {
+    filter: brightness(1.1); /* Brilha um pouco ao passar o mouse */
+    transform: translateY(-2px); /* Sobe levemente ao passar o mouse */
+}
+
+.btn-contorno {
+    background: transparent;
+    border: 2px solid var(--borda);
+    color: var(--texto);
+}
+
+.btn-contorno:hover {
+    border-color: var(--destaque);
+    color: var(--destaque);
+}
+
+.btn-limpar {
+    color: var(--texto-suave);
+    font-size: 0.9rem;
+}
+
+/* 
+   Barra de Filtros (Dashboard)
+   Usa Flexbox com wrap para se ajustar em celulares (um embaixo do outro) 
+*/
+.barra-filtros {
+    background: var(--papel);
+    padding: 25px;
+    border-radius: var(--raio);
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+    margin-bottom: 30px;
+    box-shadow: var(--sombra);
+    border: 1px solid var(--borda);
+}
+
+.campo-grupo {
+    flex: 1; /* Faz os campos crescerem para ocupar o espaço disponível */
+}
+
+.campo-grupo label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+}
+
+/* Estilo padronizado para inputs, selects e textareas */
+.campo-txt {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    background: var(--fundo);
+    color: var(--texto);
+    outline: none;
+}
+
+/* 
+   Grade de Tarefas (Cards)
+   Usa CSS Grid para criar colunas automáticas de no mínimo 320px cada 
+*/
+.grade-tarefas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 25px;
+}
+
+/* Estilização de cada Card de Tarefa */
+.cartao-tarefa {
+    background: var(--papel);
+    padding: 25px;
+    border-radius: var(--raio);
+    border: 1px solid var(--borda);
+    box-shadow: var(--sombra);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Detalhe de borda colorida no topo do card */
+.cartao-tarefa::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--borda);
+}
+
+.cartao-topo {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+/* Etiquetas de Status dinâmicas */
+.etiqueta {
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+/* Cores específicas para cada status */
+.etiqueta-pendente { background: #ffeaa7; color: #d35400; }
+.etiqueta-em-andamento { background: #81ecec; color: #008b8b; }
+.etiqueta-concluida { background: #55efc4; color: #006266; }
+
+.prazo {
+    font-size: 0.75rem;
+    color: var(--texto-suave);
+}
+
+.resumo {
+    font-size: 0.9rem;
+    color: var(--texto-suave);
+    margin: 15px 0;
+    flex-grow: 1;
+}
+
+.rodape-cartao {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px dashed var(--borda);
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+}
+
+/* Auxiliares de Posicionamento */
+.centralizar-cartao {
+    max-width: 450px;
+    margin: 80px auto;
+}
+
+.aviso-vazio {
+    grid-column: 1/-1;
+    text-align: center;
+    padding: 50px;
+    color: var(--texto-suave);
+    font-style: italic;
+}
+
+.topo-pagina {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}

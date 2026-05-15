@@ -1,41 +1,20 @@
-/* 
-   Configurações Globais e Variáveis de Design
-   Usamos o :root para centralizar as cores e facilitar mudanças globais 
-*/
 :root {
-    --primaria: #2c3e50;
-    /* Cor azul marinho dos menus */
-    --secundaria: #34495e;
-    /* Variação do azul para contrastes */
-    --destaque: #e67e22;
-    /* Cor laranja para botões e links importantes */
-    --sucesso: #27ae60;
-    /* Verde para mensagens de sucesso e status concluído */
-    --alerta: #f1c40f;
-    /* Amarelo para status pendente */
-    --perigo: #e74c3c;
-    /* Vermelho para exclusão e erros */
-    --fundo: #f4f7f6;
-    /* Cor de fundo cinza bem claro */
-    --papel: #ffffff;
-    /* Cor branca para os cartões e áreas de conteúdo */
-    --texto: #2d3436;
-    /* Cor principal do texto */
-    --texto-suave: #636e72;
-    /* Cor cinza para textos menos importantes */
-    --borda: #dfe6e9;
-    /* Cor das bordas e divisórias */
-    --sombra: 0 10px 20px rgba(0, 0, 0, 0.05);
-    /* Sombra suave para dar profundidade */
-    --raio: 6px;
-    /* Arredondamento padrão dos cantos */
+    --primaria: #2c3e50;      
+    --secundaria: #34495e;    
+    --destaque: #e67e22;      
+    --sucesso: #27ae60;       
+    --alerta: #f1c40f;        
+    --perigo: #e74c3c;        
+    --fundo: #f4f7f6;         
+    --papel: #ffffff;         
+    --texto: #2d3436;         
+    --texto-suave: #636e72;   
+    --borda: #dfe6e9;         
+    --sombra: 0 10px 20px rgba(0,0,0,0.05); 
+    --raio: 6px;              
 }
 
-/* 
-   Variáveis para o Tema Escuro (Dark Mode)
-   Substituímos as cores de fundo e texto quando o atributo data-theme="dark" está presente 
-*/
-[data-theme="claro"] {
+[data-theme="dark"] {
     --fundo: #1a1a2e;
     --papel: #16213e;
     --texto: #e9e9e9;
@@ -43,26 +22,26 @@
     --borda: #0f3460;
 }
 
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
 
 body {
     background: var(--fundo);
     color: var(--texto);
     line-height: 1.6;
-    transition: all 0.3s;
-    /* Transição suave ao mudar de tema */
+    transition: all 0.3s; 
 }
 
-/* Container central que limita a largura do conteúdo para não esticar demais em telas grandes */
 .container {
     max-width: 1100px;
     margin: 0 auto;
     padding: 40px 20px;
 }
 
-/* 
-   Menu Superior (Header)
-   Usa Flexbox para colocar o logo de um lado e os links do outro 
-*/
 header {
     background: var(--primaria);
     color: white;
@@ -70,7 +49,7 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .logo {
@@ -88,7 +67,7 @@ header {
 }
 
 .nav-links a {
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255,255,255,0.8);
     text-decoration: none;
     font-size: 0.9rem;
     font-weight: 500;
@@ -99,10 +78,6 @@ header {
     color: white;
 }
 
-/* 
-   Estilização Geral de Botões
-   Usamos transições e filtros para dar feedback visual ao usuário 
-*/
 .btn {
     padding: 10px 20px;
     border-radius: var(--raio);
@@ -120,10 +95,8 @@ header {
 }
 
 .btn-principal:hover {
-    filter: brightness(1.1);
-    /* Brilha um pouco ao passar o mouse */
+    filter: brightness(1.1); 
     transform: translateY(-2px);
-    /* Sobe levemente ao passar o mouse */
 }
 
 .btn-contorno {
@@ -142,10 +115,6 @@ header {
     font-size: 0.9rem;
 }
 
-/* 
-   Barra de Filtros (Dashboard)
-   Usa Flexbox com wrap para se ajustar em celulares (um embaixo do outro) 
-*/
 .barra-filtros {
     background: var(--papel);
     padding: 25px;
@@ -159,9 +128,7 @@ header {
 }
 
 .campo-grupo {
-    flex: 1;
-    /* Faz os campos crescerem para ocupar o espaço disponível */
-}
+    flex: 1; }
 
 .campo-grupo label {
     display: block;
@@ -172,7 +139,6 @@ header {
     color: var(--texto-suave);
 }
 
-/* Estilo padronizado para inputs, selects e textareas */
 .campo-txt {
     width: 100%;
     padding: 12px;
@@ -183,17 +149,12 @@ header {
     outline: none;
 }
 
-/* 
-   Grade de Tarefas (Cards)
-   Usa CSS Grid para criar colunas automáticas de no mínimo 320px cada 
-*/
 .grade-tarefas {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 25px;
 }
 
-/* Estilização de cada Card de Tarefa */
 .cartao-tarefa {
     background: var(--papel);
     padding: 25px;
@@ -206,7 +167,6 @@ header {
     overflow: hidden;
 }
 
-/* Detalhe de borda colorida no topo do card */
 .cartao-tarefa::before {
     content: '';
     position: absolute;
@@ -224,7 +184,6 @@ header {
     align-items: center;
 }
 
-/* Etiquetas de Status dinâmicas */
 .etiqueta {
     font-size: 0.7rem;
     font-weight: 800;
@@ -233,21 +192,9 @@ header {
     text-transform: uppercase;
 }
 
-/* Cores específicas para cada status */
-.etiqueta-pendente {
-    background: #ffeaa7;
-    color: #d35400;
-}
-
-.etiqueta-em-andamento {
-    background: #81ecec;
-    color: #008b8b;
-}
-
-.etiqueta-concluida {
-    background: #55efc4;
-    color: #006266;
-}
+.etiqueta-pendente { background: #ffeaa7; color: #d35400; }
+.etiqueta-em-andamento { background: #81ecec; color: #008b8b; }
+.etiqueta-concluida { background: #55efc4; color: #006266; }
 
 .prazo {
     font-size: 0.75rem;
@@ -271,7 +218,6 @@ header {
     color: var(--texto-suave);
 }
 
-/* Auxiliares de Posicionamento */
 .centralizar-cartao {
     max-width: 450px;
     margin: 80px auto;

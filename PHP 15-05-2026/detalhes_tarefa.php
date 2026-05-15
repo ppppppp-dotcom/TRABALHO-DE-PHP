@@ -1,15 +1,12 @@
 <?php
-// Página de Detalhes e Gestão de uma Tarefa específica
 require_once 'includes/functions.php';
 validarLogin();
 
-// Pega o ID da URL e busca no arquivo de tarefas
 $id = $_GET['id'] ?? '';
 $list = buscarDados('tarefas');
 $t = null;
 $pos = -1;
 
-// Loop para encontrar a tarefa no array pelo ID
 foreach ($list as $i => $item) {
     if ($item['id'] === $id) {
         $t = $item;
@@ -18,20 +15,15 @@ foreach ($list as $i => $item) {
     }
 }
 
-// Se a tarefa não existir, volta para a lista principal
 if (!$t) {
     header('Location: index.php');
     exit;
 }
 
-// Regras de Negócio/Permissões
 $my_id = $_SESSION['usuario_id'];
-// Responsável e Criador podem mudar o status
 $can_status = ($my_id === $t['criador_id'] || $my_id === $t['responsavel_id']);
-// Apenas o criador pode editar ou excluir os dados básicos
 $can_edit = ($my_id === $t['criador_id']);
 
-// Lógica para adicionar novo Comentário
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comentario'])) {
     $txt = filtrar($_POST['comentario']);
     if ($txt) {
@@ -46,13 +38,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comentario'])) {
     }
 }
 
-// Lógica para alterar o Status da tarefa
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status']) && $can_status) {
     $novo = $_POST['status'];
     if ($novo !== $t['status']) {
         $old = $t['status'];
         $list[$pos]['status'] = $novo;
-        // Salva a alteração no histórico para auditoria
         $list[$pos]['historico'][] = [
             'usuario' => $_SESSION['usuario_nome'],
             'mensagem' => "Mudou o status de '$old' para '$novo'",
@@ -68,7 +58,6 @@ include 'includes/header.php';
 ?>
 
 <div class="grade-tarefas" style="grid-template-columns: 2fr 1fr;">
-    <!-- Lado Esquerdo: Detalhes da Tarefa e Comentários -->
     <div>
         <div class="cartao-tarefa" style="padding: 30px;">
             <div class="topo-pagina">
@@ -85,7 +74,6 @@ include 'includes/header.php';
 
             <p style="margin-bottom: 25px; white-space: pre-wrap;"><?= nl2br($t['descricao']) ?></p>
 
-            <!-- Grid de Informações Básicas -->
             <div class="barra-filtros"
                 style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: var(--fundo);">
                 <span>Criador: <b><?= $t['criador_nome'] ?></b></span>
@@ -96,7 +84,6 @@ include 'includes/header.php';
             </div>
 
             <?php if ($can_status): ?>
-                <!-- Formulário para troca rápida de status -->
                 <form method="POST" style="margin-top: 30px; border-top: 1px solid var(--borda); padding-top: 20px;">
                     <label>Atualizar Status:</label>
                     <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -112,7 +99,6 @@ include 'includes/header.php';
             <?php endif; ?>
         </div>
 
-        <!-- Seção de Comentários (Interação entre usuários) -->
         <div class="cartao-tarefa" style="margin-top: 25px; padding: 30px;">
             <h3>Comentários (<?= count($t['comentarios']) ?>)</h3>
             <form method="POST" style="margin-top: 20px;">
@@ -133,7 +119,6 @@ include 'includes/header.php';
         </div>
     </div>
 
-    <!-- Lado Direito: Histórico de Alterações -->
     <div>
         <div class="cartao-tarefa" style="padding: 20px;">
             <h3 style="font-size: 1.1rem;">Histórico de Ações</h3>

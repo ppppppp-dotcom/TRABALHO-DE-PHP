@@ -1,5 +1,4 @@
 <?php
-// Página para editar tarefas existentes
 require_once 'includes/functions.php';
 validarLogin();
 
@@ -9,12 +8,10 @@ $users = buscarDados('usuarios');
 $t = null;
 $pos = -1;
 
-// Busca a tarefa específica pelo ID
 foreach ($list as $i => $item) {
     if ($item['id'] === $id) { $t = $item; $pos = $i; break; }
 }
 
-// Segurança: Apenas o criador da tarefa pode editá-la
 if (!$t || $t['criador_id'] !== $_SESSION['usuario_id']) {
     header('Location: index.php');
     exit;
@@ -22,7 +19,6 @@ if (!$t || $t['criador_id'] !== $_SESSION['usuario_id']) {
 
 $err = "";
 
-// Processa a edição ao enviar o formulário
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tit = filtrar($_POST['titulo']);
     $desc = filtrar($_POST['descricao']);
@@ -30,7 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $resp = $_POST['responsavel_id'];
 
     if ($tit && $fim && $resp) {
-        // Verifica se houve alguma mudança real
         $mudou = false;
         if ($tit !== $t['titulo']) $mudou = true;
         if ($desc !== $t['descricao']) $mudou = true;
@@ -38,27 +33,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($resp !== $t['responsavel_id']) $mudou = true;
 
         if ($mudou) {
-            // Atualiza os dados no array
             $list[$pos]['titulo'] = $tit;
             $list[$pos]['descricao'] = $desc;
             $list[$pos]['data_limite'] = $fim;
             $list[$pos]['responsavel_id'] = $resp;
             
-            // Atualiza o nome do responsável se ele foi trocado
             foreach ($users as $u) if ($u['id'] === $resp) $list[$pos]['responsavel_nome'] = $u['nome'];
 
-            // Adiciona uma entrada no histórico informando a edição
             $list[$pos]['historico'][] = [
                 'usuario' => $_SESSION['usuario_nome'],
                 'mensagem' => "Editou os dados da tarefa.",
                 'data' => date('d/m/Y H:i')
             ];
 
-            // Salva as alterações no arquivo JSON
             salvarDados('tarefas', $list);
         }
         
-        // Redireciona de volta para a página de detalhes
         header("Location: detalhes_tarefa.php?id=$id");
         exit;
     } else {

@@ -1,51 +1,44 @@
 <?php
-// Página para criar novas tarefas no sistema
 require_once 'includes/functions.php';
 validarLogin();
 
-// Busca usuários para preencher o campo de "Responsável"
-$usuarios = buscarDados('usuarios');
-$erro = "";
+$users = buscarDados('usuarios');
+$err = "";
 
-// Verifica se o formulário foi enviado
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $titulo = filtrar($_POST['titulo']);
-    $descricao = filtrar($_POST['descricao']);
-    $data_limite = $_POST['data_limite'];
-    $responsavel_id = $_POST['responsavel_id'];
+    $tit = filtrar($_POST['titulo']);
+    $desc = filtrar($_POST['descricao']);
+    $fim = $_POST['data_limite'];
+    $resp = $_POST['responsavel_id'];
 
-    // Validação básica: campos obrigatórios
-    if ($titulo && $data_limite && $responsavel_id) {
-        $nome_responsavel = "";
-        // Procura o nome do responsável selecionado no array de usuários
-        foreach ($usuarios as $usuario) {
-            if ($usuario['id'] === $responsavel_id) { $nome_responsavel = $usuario['nome']; break; }
+    if ($tit && $fim && $resp) {
+        $nome_r = "";
+        foreach ($users as $u) {
+            if ($u['id'] === $resp) { $nome_r = $u['nome']; break; }
         }
 
-        $lista = buscarDados('tarefas');
-        // Adiciona a nova tarefa ao array
-        $lista[] = [
-            'id' => uniqid(), // Gera um ID único aleatório
-            'titulo' => $titulo,
-            'descricao' => $descricao,
-            'data_limite' => $data_limite,
-            'responsavel_id' => $responsavel_id,
-            'responsavel_nome' => $nome_responsavel,
+        $list = buscarDados('tarefas');
+        $list[] = [
+            'id' => uniqid(),
+            'titulo' => $tit,
+            'descricao' => $desc,
+            'data_limite' => $fim,
+            'responsavel_id' => $resp,
+            'responsavel_nome' => $nome_r,
             'criador_id' => $_SESSION['usuario_id'],
             'criador_nome' => $_SESSION['usuario_nome'],
-            'status' => 'Pendente', // Toda tarefa nova nasce como Pendente
+            'status' => 'Pendente', 
             'comentarios' => [],
             'historico' => [
                 ['usuario' => $_SESSION['usuario_nome'], 'mensagem' => 'Tarefa criada.', 'data' => date('d/m/Y H:i')]
             ]
         ];
         
-        // Salva a lista atualizada no arquivo JSON
-        salvarDados('tarefas', $lista);
+        salvarDados('tarefas', $list);
         header('Location: index.php');
         exit;
     } else {
-        $erro = "Preencha os campos obrigatórios.";
+        $err = "Preencha os campos obrigatórios.";
     }
 }
 
@@ -55,8 +48,8 @@ include 'includes/header.php';
 <div class="centralizar-cartao barra-filtros" style="max-width: 600px; flex-direction: column; align-items: stretch;">
     <h2 style="margin-bottom: 25px;">Nova Tarefa</h2>
 
-    <?php if ($erro): ?>
-        <p style="color: var(--perigo); margin-bottom: 15px;"><?= $erro ?></p>
+    <?php if ($err): ?>
+        <p style="color: var(--perigo); margin-bottom: 15px;"><?= $err ?></p>
     <?php endif; ?>
 
     <form method="POST">
@@ -79,8 +72,8 @@ include 'includes/header.php';
             <label>Responsável</label>
             <select name="responsavel_id" class="campo-txt" required>
                 <option value="">Selecione...</option>
-                <?php foreach ($usuarios as $usuario): ?>
-                    <option value="<?= $usuario['id'] ?>"><?= $usuario['nome'] ?></option>
+                <?php foreach ($users as $u): ?>
+                    <option value="<?= $u['id'] ?>"><?= $u['nome'] ?></option>
                 <?php endforeach; ?>
             </select>
         </div>

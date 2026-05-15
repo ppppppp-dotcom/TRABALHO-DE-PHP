@@ -1,47 +1,41 @@
 <?php
-// Página de Cadastro de novos usuários
 require_once 'includes/functions.php';
 
-// Se já estiver logado, não precisa cadastrar
 if (isset($_SESSION['usuario_id'])) {
     header('Location: index.php');
     exit;
 }
 
-$erro = "";
-$sucesso = "";
+$err = "";
+$ok = "";
 
-// Processa o envio do formulário
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome = filtrar($_POST['nome']);
-    $email = filtrar($_POST['email']);
-    $senha = $_POST['senha'];
+    $mail = filtrar($_POST['email']);
+    $pass = $_POST['senha'];
 
-    // Valida se todos os campos foram preenchidos
-    if ($nome && $email && $senha) {
-        $usuarios = buscarDados('usuarios');
+    if ($nome && $mail && $pass) {
+        $users = buscarDados('usuarios');
         
         $existe = false;
-        // Verifica se o e-mail já existe no sistema
-        foreach ($usuarios as $usuario) {
-            if ($usuario['email'] === $email) { $existe = true; break; }
+        foreach ($users as $u) {
+            if ($u['email'] === $mail) { $existe = true; break; }
         }
 
         if ($existe) {
-            $erro = "E-mail já cadastrado.";
+            $err = "E-mail já cadastrado.";
         } else {
-            // Cria o novo usuário com senha criptografada (Hash)
-            $usuarios[] = [
+            $users[] = [
                 'id' => uniqid(),
                 'nome' => $nome,
-                'email' => $email,
-                'senha' => password_hash($senha, PASSWORD_DEFAULT)
+                'email' => $mail,
+                'senha' => password_hash($pass, PASSWORD_DEFAULT)
             ];
-            salvarDados('usuarios', $usuarios);
-            $sucesso = "Conta criada! Já pode entrar.";
+            salvarDados('usuarios', $users);
+            $ok = "Conta criada! Já pode entrar.";
         }
     } else {
-        $erro = "Preencha tudo.";
+        $err = "Preencha tudo.";
     }
 }
 
@@ -51,12 +45,12 @@ include 'includes/header.php';
 <div class="centralizar-cartao barra-filtros" style="flex-direction: column; align-items: stretch;">
     <h2 style="margin-bottom: 20px; text-align: center;">Criar Conta</h2>
     
-    <?php if ($erro): ?>
-        <p style="color: var(--perigo); margin-bottom: 15px; text-align: center;"><?= $erro ?></p>
+    <?php if ($err): ?>
+        <p style="color: var(--perigo); margin-bottom: 15px; text-align: center;"><?= $err ?></p>
     <?php endif; ?>
     
-    <?php if ($sucesso): ?>
-        <p style="color: var(--sucesso); margin-bottom: 15px; text-align: center;"><?= $sucesso ?></p>
+    <?php if ($ok): ?>
+        <p style="color: var(--sucesso); margin-bottom: 15px; text-align: center;"><?= $ok ?></p>
     <?php endif; ?>
 
     <form method="POST">

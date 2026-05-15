@@ -4,33 +4,33 @@ require_once 'includes/functions.php';
 validarLogin();
 
 // Busca usuários para preencher o campo de "Responsável"
-$users = buscarDados('usuarios');
-$err = "";
+$usuarios = buscarDados('usuarios');
+$erro = "";
 
 // Verifica se o formulário foi enviado
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $tit = filtrar($_POST['titulo']);
-    $desc = filtrar($_POST['descricao']);
-    $fim = $_POST['data_limite'];
-    $resp = $_POST['responsavel_id'];
+    $titulo = filtrar($_POST['titulo']);
+    $descricao = filtrar($_POST['descricao']);
+    $data_limite = $_POST['data_limite'];
+    $responsavel_id = $_POST['responsavel_id'];
 
     // Validação básica: campos obrigatórios
-    if ($tit && $fim && $resp) {
-        $nome_r = "";
+    if ($titulo && $data_limite && $responsavel_id) {
+        $nome_responsavel = "";
         // Procura o nome do responsável selecionado no array de usuários
-        foreach ($users as $u) {
-            if ($u['id'] === $resp) { $nome_r = $u['nome']; break; }
+        foreach ($usuarios as $usuario) {
+            if ($usuario['id'] === $responsavel_id) { $nome_responsavel = $usuario['nome']; break; }
         }
 
-        $list = buscarDados('tarefas');
+        $lista = buscarDados('tarefas');
         // Adiciona a nova tarefa ao array
-        $list[] = [
+        $lista[] = [
             'id' => uniqid(), // Gera um ID único aleatório
-            'titulo' => $tit,
-            'descricao' => $desc,
-            'data_limite' => $fim,
-            'responsavel_id' => $resp,
-            'responsavel_nome' => $nome_r,
+            'titulo' => $titulo,
+            'descricao' => $descricao,
+            'data_limite' => $data_limite,
+            'responsavel_id' => $responsavel_id,
+            'responsavel_nome' => $nome_responsavel,
             'criador_id' => $_SESSION['usuario_id'],
             'criador_nome' => $_SESSION['usuario_nome'],
             'status' => 'Pendente', // Toda tarefa nova nasce como Pendente
@@ -41,11 +41,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
         
         // Salva a lista atualizada no arquivo JSON
-        salvarDados('tarefas', $list);
+        salvarDados('tarefas', $lista);
         header('Location: index.php');
         exit;
     } else {
-        $err = "Preencha os campos obrigatórios.";
+        $erro = "Preencha os campos obrigatórios.";
     }
 }
 
@@ -55,8 +55,8 @@ include 'includes/header.php';
 <div class="centralizar-cartao barra-filtros" style="max-width: 600px; flex-direction: column; align-items: stretch;">
     <h2 style="margin-bottom: 25px;">Nova Tarefa</h2>
 
-    <?php if ($err): ?>
-        <p style="color: var(--perigo); margin-bottom: 15px;"><?= $err ?></p>
+    <?php if ($erro): ?>
+        <p style="color: var(--perigo); margin-bottom: 15px;"><?= $erro ?></p>
     <?php endif; ?>
 
     <form method="POST">
@@ -79,8 +79,8 @@ include 'includes/header.php';
             <label>Responsável</label>
             <select name="responsavel_id" class="campo-txt" required>
                 <option value="">Selecione...</option>
-                <?php foreach ($users as $u): ?>
-                    <option value="<?= $u['id'] ?>"><?= $u['nome'] ?></option>
+                <?php foreach ($usuarios as $usuario): ?>
+                    <option value="<?= $usuario['id'] ?>"><?= $usuario['nome'] ?></option>
                 <?php endforeach; ?>
             </select>
         </div>

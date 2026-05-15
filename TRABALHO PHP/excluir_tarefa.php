@@ -4,20 +4,20 @@ validarLogin();
 
 $id = $_GET['id'] ?? '';
 $tarefas = buscarDados('tarefas');
-$nova = [];
+$lista_atualizada = [];
 
-foreach ($tarefas as $t) {
-    if ($t['id'] === $id) {
-        if ($t['criador_id'] !== $_SESSION['usuario_id']) {
+foreach ($tarefas as $tarefa) {
+    if ($tarefa['id'] === $id) {
+        if ($tarefa['criador_id'] !== $_SESSION['usuario_id']) {
             header('Location: index.php');
             exit;
         }
         continue;
     }
-    $nova[] = $t;
+    $lista_atualizada[] = $tarefa;
 }
 
-salvarDados('tarefas', $nova);
+salvarDados('tarefas', $lista_atualizada);
 header('Location: index.php');
 exit;
 ?>

@@ -8,40 +8,40 @@ if (isset($_SESSION['usuario_id'])) {
     exit;
 }
 
-$err = "";
-$ok = "";
+$erro = "";
+$sucesso = "";
 
 // Processa o envio do formulário
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome = filtrar($_POST['nome']);
-    $mail = filtrar($_POST['email']);
-    $pass = $_POST['senha'];
+    $email = filtrar($_POST['email']);
+    $senha = $_POST['senha'];
 
     // Valida se todos os campos foram preenchidos
-    if ($nome && $mail && $pass) {
-        $users = buscarDados('usuarios');
+    if ($nome && $email && $senha) {
+        $usuarios = buscarDados('usuarios');
         
         $existe = false;
         // Verifica se o e-mail já existe no sistema
-        foreach ($users as $u) {
-            if ($u['email'] === $mail) { $existe = true; break; }
+        foreach ($usuarios as $usuario) {
+            if ($usuario['email'] === $email) { $existe = true; break; }
         }
 
         if ($existe) {
-            $err = "E-mail já cadastrado.";
+            $erro = "E-mail já cadastrado.";
         } else {
             // Cria o novo usuário com senha criptografada (Hash)
-            $users[] = [
+            $usuarios[] = [
                 'id' => uniqid(),
                 'nome' => $nome,
-                'email' => $mail,
-                'senha' => password_hash($pass, PASSWORD_DEFAULT)
+                'email' => $email,
+                'senha' => password_hash($senha, PASSWORD_DEFAULT)
             ];
-            salvarDados('usuarios', $users);
-            $ok = "Conta criada! Já pode entrar.";
+            salvarDados('usuarios', $usuarios);
+            $sucesso = "Conta criada! Já pode entrar.";
         }
     } else {
-        $err = "Preencha tudo.";
+        $erro = "Preencha tudo.";
     }
 }
 
@@ -51,12 +51,12 @@ include 'includes/header.php';
 <div class="centralizar-cartao barra-filtros" style="flex-direction: column; align-items: stretch;">
     <h2 style="margin-bottom: 20px; text-align: center;">Criar Conta</h2>
     
-    <?php if ($err): ?>
-        <p style="color: var(--perigo); margin-bottom: 15px; text-align: center;"><?= $err ?></p>
+    <?php if ($erro): ?>
+        <p style="color: var(--perigo); margin-bottom: 15px; text-align: center;"><?= $erro ?></p>
     <?php endif; ?>
     
-    <?php if ($ok): ?>
-        <p style="color: var(--sucesso); margin-bottom: 15px; text-align: center;"><?= $ok ?></p>
+    <?php if ($sucesso): ?>
+        <p style="color: var(--sucesso); margin-bottom: 15px; text-align: center;"><?= $sucesso ?></p>
     <?php endif; ?>
 
     <form method="POST">
